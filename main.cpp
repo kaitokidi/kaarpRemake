@@ -11,14 +11,14 @@
 
 #include <vector>
 
-#define dolog std::cout<< 
+#define dolog std::cout<<
 #define andthen <<" , "<<
 #define please  <<std::endl;
 static const int GRID_WIDTH = 7;
 static const int GRID_HEIGHT = 6;
 
-enum Tile { 
-  Empty, Player1, Player2, shinny, qtt_Tiles 
+enum Tile {
+  Empty, Player1, Player2, shinny, qtt_Tiles
 };
 
 
@@ -37,24 +37,24 @@ void swapPlayers(Player& p){
     if(p == player1) p = player2;
     else p = player1;
 }
- 
+
 bool fourHorizontal(const std::vector < std::vector < Tile > >& board, const unsigned int y, const unsigned int x) {
-  
+
     //dolog x andthen y andthen board[y][x] please
     Tile tileColor = board[y][x];
     int cnt = 1, i;
-    for(i = x + 1; i < 7 && board[y][i] == tileColor; i++) cnt++;
+    for(i = x + 1; i < GRID_WIDTH && board[y][i] == tileColor; i++) cnt++;
     for(i = x - 1; i > 0 && board[y][i] == tileColor; i--) cnt++;
 
     if(cnt>=4) {
-        //while(i+1 < 7 && board[y][++i] == tileColor) winnerBoard[y][i] = shinny;
+        //while(i+1 < GRID_WIDTH && board[y][++i] == tileColor) winnerBoard[y][i] = shinny;
         return true;
     }
     return false;
 }
- 
+
 bool fourVertical(const std::vector < std::vector < Tile > >& board, const unsigned int y, const unsigned int x) {
-  
+
     Tile tileColor = board[y][x];
     int cnt = 1, i;
     for(i = y + 1; i < GRID_HEIGHT && board[i][x] == tileColor; i++) cnt++;
@@ -71,22 +71,22 @@ bool fourDiagonal(const std::vector < std::vector < Tile > >& board, const unsig
     bool t = false;
     int cnt = 1, i, j;
     for(i = y + 1, j = x - 1; i < GRID_HEIGHT && j > 0 && board[i][j]==tileColor; i++, j--) cnt++;
-    for(i = y - 1, j = x + 1; i > 0 && j < 7 && board[i][j]==tileColor; i--, j++) cnt++;
+    for(i = y - 1, j = x + 1; i > 0 && j < GRID_WIDTH && board[i][j]==tileColor; i--, j++) cnt++;
     if(cnt>=4) {
         //while(i+1 < GRID_HEIGHT && j-1 > 0 && board[++i][--j] == tileColor) winnerBoard[i][j] = shinny;
         t = true;
     }
     cnt = 1;
-    for(i = y + 1, j = x + 1; i < GRID_HEIGHT && j < 7 && board[i][j]==tileColor; i++, j++) cnt++;
+    for(i = y + 1, j = x + 1; i < GRID_HEIGHT && j < GRID_WIDTH && board[i][j]==tileColor; i++, j++) cnt++;
     for(i = y - 1, j = x - 1; i > 0 && j > 0 && board[i][j]==tileColor; i--, j--) cnt++;
     if(cnt>=4) {
-        //while(i+1 < GRID_HEIGHT && j+1 < 7 && board[++i][++j] == tileColor) winnerBoard[i][j] = shinny;
+        //while(i+1 < GRID_HEIGHT && j+1 < GRID_WIDTH && board[++i][++j] == tileColor) winnerBoard[i][j] = shinny;
         return true;
     }
     return t;
 }
 
-bool isEndOfGame(const std::vector < std::vector < Tile > >& board, const unsigned int y, const unsigned int x) {  
+bool isEndOfGame(const std::vector < std::vector < Tile > >& board, const unsigned int y, const unsigned int x) {
     //dolog "checking end of game" please
     bool t = false;
     t |= fourHorizontal(board, y, x);
@@ -95,7 +95,7 @@ bool isEndOfGame(const std::vector < std::vector < Tile > >& board, const unsign
     //dolog t please
     t |= fourDiagonal(board, y, x);
     //dolog t please
-    //dolog "checked" please 
+    //dolog "checked" please
     return t;
 }
 
@@ -133,14 +133,14 @@ int main(){
 
     window.setFramerateLimit(30);
 
-    
+
 /***************************************************/
-int aux;
-sf::Event event;
+    int aux;
+    sf::Event event;
     bool waitingTouch = false;
     //sf::CircleShape spoiler(10);
-    
-    sf::ConvexShape spoiler(7);
+
+    sf::ConvexShape spoiler(GRID_WIDTH);
         int index = 0;
         spoiler.setPoint(index, sf::Vector2f(-20,0)); ++index;
         spoiler.setPoint(index, sf::Vector2f(-10,0)); ++index;
@@ -149,17 +149,17 @@ sf::Event event;
         spoiler.setPoint(index, sf::Vector2f(10,0)); ++index;
         spoiler.setPoint(index, sf::Vector2f(20,0)); ++index;
         spoiler.setPoint(index, sf::Vector2f(0,20)); ++index;
-        
+
 //    spoiler.setOrigin(0,0);
-        
+
     spoiler.setFillColor(sf::Color::Green);
-    
+
     sf::Vector2f touchPos;
     sf::Vector2i lastTokenPos;
     RoundState state = playing;
     Player currentPlayer = player1;
-    
-    std::vector < std::vector < Tile > > matrix (GRID_HEIGHT, std::vector< Tile > (7, Empty));
+
+    std::vector < std::vector < Tile > > matrix (GRID_HEIGHT, std::vector< Tile > (GRID_WIDTH, Empty));
 
 //    sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "dos", sf::Style::Close);
 /*    while(window.isOpen()){
@@ -170,11 +170,13 @@ sf::Event event;
         window.draw(c);
         window.display();
     }*/
-  
-    float space = window.getSize().x/7;
-            
-    sf::RectangleShape rectangleDeColor (sf::Vector2f(window.getSize().x, window.getSize().y - GRID_HEIGHT*space));
-    rectangleDeColor.setPosition(sf::Vector2f(0,GRID_HEIGHT*space));
+
+    const float space = std::min(window.getSize().x/GRID_WIDTH, window.getSize().y/GRID_HEIGHT);
+    const float leftOffset = (window.getSize().x - space*GRID_WIDTH)*0.5f;
+
+    sf::RectangleShape rectangleDeColor (sf::Vector2f(space*GRID_WIDTH, space*GRID_HEIGHT));
+    rectangleDeColor.setFillColor(sf::Color::Blue);
+    rectangleDeColor.setPosition(sf::Vector2f(leftOffset, 0.0f));
 
     window.setFramerateLimit(30);
 /***************************************************/
@@ -199,8 +201,8 @@ sf::Event event;
                     //Do nothing
                     break;
             }
-        }   
-       
+        }
+
 
         if ((state == playing || state == touchDown) && (sf::Touch::isDown(0)||sf::Mouse::isButtonPressed(sf::Mouse::Left))) {
             state = touchDown;
@@ -212,14 +214,16 @@ sf::Event event;
             }
             //set arrow position to tocolumn(touchPos.x), 0;
             spoiler.setPosition(touchPos.x, 10);
-        } 
-        
+        }
+
         if(state == touchDown && !(sf::Touch::isDown(0)||sf::Mouse::isButtonPressed(sf::Mouse::Left))) {
-            
-            int column = (7)* touchPos.x/window.getSize().x;   
-            
-            std::cout << " column "<< column  << " touchpos " <<touchPos.x << " gridwidth" << 7 << " w size x " << window.getSize().x << std::endl;
-            
+
+            int column = (GRID_WIDTH)* ((touchPos.x-leftOffset)/(space * GRID_WIDTH));
+            // Place in the closes column if click was out of board.
+            column = std::max(0, std::min(column, GRID_WIDTH-1));
+
+            std::cout << " column "<< column  << " touchpos " <<touchPos.x << " gridwidth" << GRID_WIDTH << " w size x " << window.getSize().x << std::endl;
+
             for(uint i = GRID_HEIGHT-1; i >= 0 && state != end; --i){
                 if(matrix[i][column] == Empty){
                     lastTokenPos.x = i;
@@ -234,7 +238,7 @@ sf::Event event;
             }
             if(state == touchDown) state = playing;
         }
-        
+
         if(state == end){
             std::cout << "end";
             if(isEndOfGame(matrix, lastTokenPos.x, lastTokenPos.y)){
@@ -247,9 +251,7 @@ sf::Event event;
             }
             std::cout << "ended";
         }
-        
-        
-        
+
         if(state == finished){
             if(waitingTouch && (sf::Touch::isDown(0)||sf::Mouse::isButtonPressed(sf::Mouse::Left)) ){
                 for(int f = 0; f < matrix.size(); ++f){
@@ -265,13 +267,14 @@ sf::Event event;
                 swapPlayers(currentPlayer);
             }
         }
- 
-        window.clear(sf::Color::Blue);
-        
+
+        window.clear(currentPlayer == player1 ? sf::Color::Yellow : sf::Color::Red);
+        window.draw(rectangleDeColor);
+
         sf::CircleShape circle(space/2.5);
         for(int f = 0; f < matrix.size(); ++f){
             for(int c = 0; c < matrix[0].size(); ++c){
-                circle.setPosition(c*space, f*space);
+                circle.setPosition(leftOffset + c*space + space*0.1, f*space + space*0.1f);
                 if(matrix[f][c] == Player1) circle.setFillColor(sf::Color::Yellow);
                 if(matrix[f][c] == Player2) circle.setFillColor(sf::Color::Red);
                 if(matrix[f][c] == Empty) circle.setFillColor(sf::Color::Black);
@@ -279,10 +282,7 @@ sf::Event event;
             }
         }
         window.draw(spoiler);
-        if(currentPlayer == player1) rectangleDeColor.setFillColor(sf::Color::Yellow);
-        else rectangleDeColor.setFillColor(sf::Color::Red);
-        window.draw(rectangleDeColor);
-        
+
         window.display();
 
     }
